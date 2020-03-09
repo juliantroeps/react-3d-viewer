@@ -1,28 +1,27 @@
+export default function Tick(fuc, name) {
+    let Renderer = {animate: true, name: ''};
 
-export default function Tick(fuc,name){
-  var Renderer = {animate:true,name:''}
+    let elements = [
+        Object.assign(Object.create(Renderer), {fuc, name})
+    ];
 
-  var els = [
-    Object.assign(Object.create(Renderer),{fuc,name})
-  ]
-  var animate = ()=>{
-    requestAnimationFrame(animate)
-    els.forEach(o=>{
-      var {fuc,animate} = o
-      if(animate){
-        fuc.call(o,Date.now())
-      }
-      
-    })
-  }
-  animate()
-  //debugger
-  Tick = (fuc,name) =>{
-    //debugger
-    var o = Object.assign(Object.create(Renderer),{fuc,name})
-    els.push(o)
-    return o
-  }
+    const animate = () => {
+        requestAnimationFrame(animate);
+        elements.forEach(o => {
+            const {fuc, animate} = o;
+            if (animate) {
+                fuc.call(o, Date.now())
+            }
+        });
+    };
 
-  return els[0]
+    animate();
+
+    Tick = (fuc, name) => {
+        let o = Object.assign(Object.create(Renderer), {fuc, name})
+        elements.push(o);
+        return o
+    };
+
+    return elements[0]
 }

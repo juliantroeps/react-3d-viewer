@@ -1,65 +1,78 @@
-var webpack = require("webpack");
-var path = require("path");
+const path          = require('path');
+const webpack       = require('webpack');
+const TerserPlugin  = require('terser-webpack-plugin');
 
-const ENV = process.env.npm_lifecycle_event;
+module.exports = function(env) {
+    const mode              = env.NODE_ENV || 'development';
+    const showMaps          = mode === 'development';
 
-module.exports = {
-    entry: ENV === 'site' ? './site/src/main.js' : './src/main.js',
+    // Paths
+    let outPath;
+    const distPath  = path.resolve(__dirname, 'dist/');
+    const srcPath   = path.resolve(__dirname, 'src/');
 
-    output: ENV === 'site' ?
-        {path: __dirname + '/site/dist/', filename: 'scripts/[name].js'} :
-        {
-            path: __dirname + '/dist/',
-            filename: 'scripts/react-3d-viewer.js',
-            library: 'React3DViewer',
-            libraryTarget: 'umd'
+    // Optimizations
+    let opti;
+
+    if(mode === 'production') {
+        opti = {
+            minimize: true,
+            minimizer: [
+                new TerserPlugin({
+                    cache: true,
+                    parallel: true,
+                    sourceMap: showMaps,
+                    terserOptions: {}
+                })
+            ]
+        }
+        outPath = distPath;
+    } else {
+        opti = {
+            minimizer: [
+                new TerserPlugin({
+                    cache: true,
+                    parallel: true,
+                    sourceMap: showMaps,
+                    terserOptions: {}
+                })
+            ]
+        }
+        outPath = srcPath;
+    }
+
+    const entry = {
+        viewer: './src/main.js',
+    };
+
+    return {
+        mode,
+        entry,
+        output: {
+            path: outPath,
+            filename: `react-3d-viewer.js`,
         },
-    module: {
-        rules: [
-            {
-                test: /\.js$/,
-                exclude: /(node_modules)/,
-                loader: 'babel-loader',
-                query: {
-                    presets: ['env', 'stage-0', 'react'],
-                    "plugins": ["transform-decorators-legacy"]
-                }
-            },
-            {
-                test: /\.(css|less)$/,
-                use: [
-
-                    'style-loader',
-                    'css-loader',
-                    {
-                        loader: 'postcss-loader',
+        plugins: [
+            new webpack.BannerPlugin(" react-3d-viewer v" + require('./package.json').version + "\r\n By https://github.com/juliantroeps/ \r\n Github: https://github.com/juliantroeps/react-3d-viewer\r\n MIT Licensed."),
+        ],
+        module: {
+            rules: [
+                {
+                    test: /\.js$/,
+                    exclude: /node_modules/,
+                    use: {
+                        loader: "babel-loader",
                         options: {
-                            plugins: () => [require('autoprefixer')]
-                        }
-                    },
-                    'less-loader'
-                ]
-            },
-            {
-                test: /\.(png|jpg|jpeg|gif|webp)$/,
-                use: [
-                    {
-                        loader: 'file-loader',
-                        options: {
-                            publicPath: '',
-                            name: 'img/[name].[ext]?[hash:6]'
-
+                            presets: ['babel-preset-env']
                         }
                     }
-                ]
-            },
-            {
-                test: /\.(md|obj|mtl)$/,
-                loader: 'raw-loader'
-            }
-        ]
-    },
-    plugins: [
-        new webpack.BannerPlugin(" react-3d-viewer v" + require('./package.json').version + "\r\n By https://github.com/juliantroeps/ \r\n Github: https://github.com/juliantroeps/react-3d-viewer\r\n MIT Licensed."),
-    ]
+                },
+                {
+                    test: /\.(md|obj|mtl)$/,
+                    loader: 'raw-loader'
+                }
+            ]
+        },
+        optimization: opti
+    };
 };
